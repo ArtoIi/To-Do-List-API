@@ -28,11 +28,14 @@ func (s *ToDoService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
 		HashedPassword: hashed,
 	}
 	err := s.repo.Register(user)
+	if err != nil {
+		return "", err
+	}
 
 	token, err := security.GenerateToken(user)
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return token, err

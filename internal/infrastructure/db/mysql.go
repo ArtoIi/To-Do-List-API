@@ -33,7 +33,9 @@ func (r *MySQLRepository) Register(user *domain.User) error {
 			VALUES (?,?,?)`
 
 	_, err := r.db.Exec(query, user.Name, user.Email, user.HashedPassword)
+
 	return err
+
 }
 
 func (r *MySQLRepository) GetEmail(email string) (*domain.User, error) {

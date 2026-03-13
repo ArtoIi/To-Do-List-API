@@ -30,7 +30,6 @@ func NewToDoHandler(s UserService) *ToDoHandler {
 }
 
 func (h *ToDoHandler) Register(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -42,7 +41,8 @@ func (h *ToDoHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.CreateUser(user); err != nil {
+	token, err := h.service.CreateUser(user)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
