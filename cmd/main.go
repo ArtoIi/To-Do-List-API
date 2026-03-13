@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ArtoIi/To-Do-List-API/internal/application"
+	userService "github.com/ArtoIi/To-Do-List-API/internal/application/user_service"
 	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/db"
 	"github.com/ArtoIi/To-Do-List-API/internal/interfaces"
 	"github.com/joho/godotenv"
@@ -24,11 +24,17 @@ func main() {
 		log.Fatalf("Erro ao conectar no MySQL: %v", err)
 	}
 	fmt.Println("Conectado ao MySQL com sucesso!")
-	service := application.NewToDoService(repo)
+	service := userService.NewToDoService(repo)
 	handler := interfaces.NewToDoHandler(service)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/register", handler.Register)
+	mux.HandleFunc("POST /user", handler.Register)
+	mux.HandleFunc("GET /getEmail/{email}", handler.GetEmail)
+	mux.HandleFunc("GET /getId/{id}", handler.GetId)
+	mux.HandleFunc("PUT /user/{id}", handler.Update)
+	mux.Handle("DELETE /user/{id}", interfaces.AuthMiddleware(http.HandlerFunc(handler.Delete)))
+	mux.HandleFunc("POST /login", handler.Login)
+	mux.Handle("GET /identify", interfaces.AuthMiddleware(http.HandlerFunc(handler.Identify)))
 
 	port := ":8080"
 
