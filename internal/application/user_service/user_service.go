@@ -31,8 +31,8 @@ func (s *ToDoService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	token, err := security.GenerateToken(user)
+	userCreated, _ := s.GetByEmail(user.Email)
+	token, err := security.GenerateToken(userCreated)
 
 	if err != nil {
 		return "", err
