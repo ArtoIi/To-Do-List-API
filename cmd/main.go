@@ -1,15 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	todoservice "github.com/ArtoIi/To-Do-List-API/internal/application/todo_service"
 	userService "github.com/ArtoIi/To-Do-List-API/internal/application/user_service"
-	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/db"
+	todo_repo "github.com/ArtoIi/To-Do-List-API/internal/infrastructure/repository/todo"
+	userRepo "github.com/ArtoIi/To-Do-List-API/internal/infrastructure/repository/user"
 	"github.com/ArtoIi/To-Do-List-API/internal/interfaces"
+	todoHandler "github.com/ArtoIi/To-Do-List-API/internal/interfaces/todo_handler"
+	userHandler "github.com/ArtoIi/To-Do-List-API/internal/interfaces/user_handler"
 	"github.com/joho/godotenv"
 )
 
@@ -19,22 +24,36 @@ func main() {
 	}
 
 	dns := os.Getenv("MYSQL_DSN")
-	repo, err := db.NewMySQLRepository(dns)
+	dbConn, err := sql.Open("mysql", dns)
 	if err != nil {
-		log.Fatalf("Erro ao conectar no MySQL: %v", err)
+		log.Fatalf("Erro ao abrir o servidor: %v", err)
 	}
+	if err := dbConn.Ping(); err != nil {
+		log.Fatalf("Erro ao se conectar ao servidor: %v", err)
+	}
+	defer dbConn.Close()
 	fmt.Println("Conectado ao MySQL com sucesso!")
-	service := userService.NewToDoService(repo)
-	handler := interfaces.NewToDoHandler(service)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /user", handler.Register)
-	mux.HandleFunc("GET /getEmail/{email}", handler.GetEmail)
-	mux.HandleFunc("GET /getId/{id}", handler.GetId)
-	mux.HandleFunc("PUT /user/{id}", handler.Update)
-	mux.Handle("DELETE /user/{id}", interfaces.AuthMiddleware(http.HandlerFunc(handler.Delete)))
-	mux.HandleFunc("POST /login", handler.Login)
-	mux.Handle("GET /identify", interfaces.AuthMiddleware(http.HandlerFunc(handler.Identify)))
+
+	//User
+	userRepo := userRepo.NewUserRepository(dbConn)
+	userService := userService.NewUserService(userRepo)
+	userHandler := userHandler.NewUserHandler(userService)
+
+	mux.HandleFunc("POST /user", userHandler.Register)
+	mux.HandleFunc("GET /getEmail/{email}", userHandler.GetEmail)
+	mux.HandleFunc("GET /getId/{id}", userHandler.GetId)
+	mux.HandleFunc("PUT /user/{id}", userHandler.Update)
+	mux.Handle("DELETE /user/{id}", interfaces.AuthMiddleware(http.HandlerFunc(userHandler.Delete)))
+	mux.HandleFunc("POST /login", userHandler.Login)
+	mux.Handle("GET /identify", interfaces.AuthMiddleware(http.HandlerFunc(userHandler.Identify)))
+
+	//Todo
+	toDoRepo := todo_repo.NewUserRepository(dbConn)
+	toDoService := todoservice.NewToDoService(toDoRepo)
+	toDoHandler := todoHandler.NewToDoHandler(toDoService)
+	mux.Handle("POST /todo", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Post)))
 
 	port := ":8080"
 

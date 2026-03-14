@@ -1,4 +1,4 @@
-package interfaces
+package userHandler
 
 import (
 	"encoding/json"
@@ -21,15 +21,15 @@ type UserService interface {
 	Login(email, password string) (string, error)
 }
 
-type ToDoHandler struct {
+type UserHandler struct {
 	service UserService
 }
 
-func NewToDoHandler(s UserService) *ToDoHandler {
-	return &ToDoHandler{service: s}
+func NewUserHandler(s UserService) *UserHandler {
+	return &UserHandler{service: s}
 }
 
-func (h *ToDoHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -50,7 +50,7 @@ func (h *ToDoHandler) Register(w http.ResponseWriter, r *http.Request) {
 	utils.Respond(w, http.StatusCreated, token)
 }
 
-func (h *ToDoHandler) GetEmail(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -65,7 +65,7 @@ func (h *ToDoHandler) GetEmail(w http.ResponseWriter, r *http.Request) {
 	utils.Respond(w, http.StatusOK, result)
 
 }
-func (h *ToDoHandler) GetId(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetId(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -82,7 +82,7 @@ func (h *ToDoHandler) GetId(w http.ResponseWriter, r *http.Request) {
 	utils.Respond(w, http.StatusOK, result)
 
 }
-func (h *ToDoHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -103,7 +103,7 @@ func (h *ToDoHandler) Update(w http.ResponseWriter, r *http.Request) {
 	utils.Respond(w, http.StatusOK, updatedUser)
 
 }
-func (h *ToDoHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -120,7 +120,7 @@ func (h *ToDoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *ToDoHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
@@ -143,15 +143,25 @@ func (h *ToDoHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Brincadeirinha
-func (h *ToDoHandler) Identify(w http.ResponseWriter, r *http.Request) {
-	idstr := r.Context().Value("user_id").(string)
-	id, _ := strconv.Atoi(idstr)
+func (h *UserHandler) Identify(w http.ResponseWriter, r *http.Request) {
+	idVal := r.Context().Value("user_id")
 
-	user, _ := h.service.GetById(id)
+	userIDFloat, ok := idVal.(float64)
+	if !ok {
+		http.Error(w, "user_id inválido", http.StatusUnauthorized)
+		return
+	}
+
+	userID := int(userIDFloat)
+
+	user, err := h.service.GetById(userID)
+	if err != nil {
+		h.handleError(w, r, err)
+	}
 	frase := fmt.Sprintf("Oii, %s", user.Name)
 	utils.Respond(w, http.StatusOK, frase)
 }
 
-func (h *ToDoHandler) handleError(w http.ResponseWriter, r *http.Request, err error) {
+func (h *UserHandler) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	utils.RespondError(w, r, err)
 }
