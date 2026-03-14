@@ -1,6 +1,6 @@
 package todoDTO
 
-type CreateToDoDTO struct {
+type ToDoDTO struct {
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
 }

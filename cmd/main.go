@@ -42,8 +42,8 @@ func main() {
 	userHandler := userHandler.NewUserHandler(userService)
 
 	mux.HandleFunc("POST /user", userHandler.Register)
-	mux.HandleFunc("GET /getEmail/{email}", userHandler.GetEmail)
-	mux.HandleFunc("GET /getId/{id}", userHandler.GetId)
+	mux.HandleFunc("GET /user/getEmail/{email}", userHandler.GetEmail)
+	mux.HandleFunc("GET /user/getId/{id}", userHandler.GetId)
 	mux.HandleFunc("PUT /user/{id}", userHandler.Update)
 	mux.Handle("DELETE /user/{id}", interfaces.AuthMiddleware(http.HandlerFunc(userHandler.Delete)))
 	mux.HandleFunc("POST /login", userHandler.Login)
@@ -54,6 +54,8 @@ func main() {
 	toDoService := todoservice.NewToDoService(toDoRepo)
 	toDoHandler := todoHandler.NewToDoHandler(toDoService)
 	mux.Handle("POST /todo", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Post)))
+	mux.HandleFunc("GET /todo/getId/{id}", toDoHandler.GetId)
+	mux.HandleFunc("GET /todo/getUserId/{user_id}", toDoHandler.GetUserId)
 
 	port := ":8080"
 
