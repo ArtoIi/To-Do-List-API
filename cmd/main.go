@@ -56,6 +56,8 @@ func main() {
 	mux.Handle("POST /todo", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Post)))
 	mux.HandleFunc("GET /todo/getId/{id}", toDoHandler.GetId)
 	mux.HandleFunc("GET /todo/getUserId/{user_id}", toDoHandler.GetUserId)
+	mux.HandleFunc("DELETE /todo/{id}", toDoHandler.Delete)
+	mux.HandleFunc("PUT /todo/{id}", toDoHandler.Update)
 
 	port := ":8080"
 

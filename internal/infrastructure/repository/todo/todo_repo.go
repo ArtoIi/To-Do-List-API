@@ -82,7 +82,7 @@ func (r *TodoRepository) GetUserId(id int) ([]*domain.ToDo, error) {
 
 func (r *TodoRepository) Update(todo *domain.ToDo) (*domain.ToDo, error) {
 
-	query := `UPDATE user SET title=?, description=?, updated_at=? WHERE id=?`
+	query := `UPDATE todo SET title=?, description=?, updated_at=? WHERE id=?`
 
 	result, err := r.db.Exec(query, todo.Title, todo.Description, todo.UpdatedAt, todo.ID)
 	if err != nil {

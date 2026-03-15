@@ -89,6 +89,42 @@ func (h *ToDoHandler) GetUserId(w http.ResponseWriter, r *http.Request) {
 	utils.Respond(w, http.StatusOK, todo)
 
 }
+func (h *ToDoHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		h.handleError(w, r, p_error.ErrInvalidMethod)
+		return
+	}
+	idstr := r.PathValue("id")
+	id, _ := strconv.Atoi(idstr)
+
+	if err := h.service.DeletePost(id); err != nil {
+		h.handleError(w, r, err)
+		return
+	}
+
+	utils.Respond(w, http.StatusNoContent, "")
+
+}
+func (h *ToDoHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		h.handleError(w, r, p_error.ErrInvalidMethod)
+		return
+	}
+	idstr := r.PathValue("id")
+	id, _ := strconv.Atoi(idstr)
+
+	var dto *todoDTO.ToDoDTO
+	json.NewDecoder(r.Body).Decode(&dto)
+
+	newToDo, err := h.service.UpdatePost(dto, id)
+	if err != nil {
+		h.handleError(w, r, err)
+		return
+	}
+
+	utils.Respond(w, http.StatusOK, newToDo)
+
+}
 
 func (h *ToDoHandler) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	utils.RespondError(w, r, err)
