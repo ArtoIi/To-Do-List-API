@@ -5,6 +5,7 @@ import (
 
 	todoDTO "github.com/ArtoIi/To-Do-List-API/internal/application/todo_dto"
 	"github.com/ArtoIi/To-Do-List-API/internal/domain"
+	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/utils"
 )
 
 type ToDoService struct {
@@ -15,8 +16,10 @@ func NewToDoService(repo domain.ToDoRepository) *ToDoService {
 	return &ToDoService{repo: repo}
 }
 
-func (s *ToDoService) CreatePost(dto *todoDTO.ToDoDTO, user_id int) (string, error) {
-
+func (s *ToDoService) CreatePost(dto *todoDTO.DTO, user_id int) (string, error) {
+	if err := utils.ValidateStruct(dto); err != nil {
+		return "", err
+	}
 	timenow := time.Now()
 	todo := &domain.ToDo{
 		UserID:      user_id,
@@ -36,15 +39,23 @@ func (s *ToDoService) GetById(id int) (*domain.ToDo, error) {
 	return s.repo.GetId(id)
 }
 
-func (s *ToDoService) GetByUserId(user_id int) ([]*domain.ToDo, error) {
-	return s.repo.GetUserId(user_id)
+func (s *ToDoService) GetByUserId(user_id int, filter todoDTO.Filter) ([]*domain.ToDo, int, error) {
+	if filter.Page <= 0 {
+		filter.Page = 1
+	}
+	if filter.Limit <= 0 {
+		filter.Limit = 10
+	}
+
+	offset := (filter.Page - 1) * filter.Limit
+	return s.repo.GetUserId(user_id, filter.Limit, offset)
 }
 
 func (s *ToDoService) DeletePost(id int) error {
 	return s.repo.Delete(id)
 }
 
-func (s *ToDoService) UpdatePost(dto *todoDTO.ToDoDTO, id int) (*domain.ToDo, error) {
+func (s *ToDoService) UpdatePost(dto *todoDTO.DTO, id int) (*domain.ToDo, error) {
 	toDoNew, err := s.GetById(id)
 	if err != nil {
 		return nil, err

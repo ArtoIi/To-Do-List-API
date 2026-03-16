@@ -43,14 +43,23 @@ func (r *TodoRepository) GetId(id int) (*domain.ToDo, error) {
 	return todo, nil
 }
 
-func (r *TodoRepository) GetUserId(id int) ([]*domain.ToDo, error) {
+func (r *TodoRepository) GetUserId(userID int, limit, offset int) ([]*domain.ToDo, int, error) {
+
+	var total int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM todo WHERE user_id = ?", userID).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	query := `SELECT id,user_id, title, description, created_at, updated_at 
 				FROM todo
-				Where user_id=? `
+				Where user_id=?
+				LIMIT ? 
+				OFFSET ?`
 
-	rows, err := r.db.Query(query, id)
+	rows, err := r.db.Query(query, userID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -67,17 +76,13 @@ func (r *TodoRepository) GetUserId(id int) ([]*domain.ToDo, error) {
 			&todo.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		todos = append(todos, todo)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return todos, nil
+	return todos, total, nil
 }
 
 func (r *TodoRepository) Update(todo *domain.ToDo) (*domain.ToDo, error) {

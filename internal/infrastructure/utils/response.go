@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
+	p_error "github.com/ArtoIi/To-Do-List-API/internal/infrastructure/error"
 )
 
 type Response[T any] struct {
@@ -13,8 +15,9 @@ type Response[T any] struct {
 }
 
 type PaginationMeta struct {
-	TotalItems  int `json:"total_items"`
-	CurrentPage int `json:"current_page"`
+	Page  int `json:"current"`
+	Limit int `json:"limit"`
+	Total int `json:"total"`
 }
 
 func Respond[T any](w http.ResponseWriter, status int, data T, meta ...*PaginationMeta) {
@@ -37,20 +40,11 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-type Error struct {
-	Err    error
-	Status int
-}
-
-func (e Error) Error() string {
-	return e.Err.Error()
-}
-
 func RespondError(w http.ResponseWriter, r *http.Request, err error) {
 	status := http.StatusInternalServerError
 	message := "internal server error"
 
-	var webErr Error
+	var webErr p_error.Error
 	if errors.As(err, &webErr) {
 		status = webErr.Status
 		message = webErr.Error()

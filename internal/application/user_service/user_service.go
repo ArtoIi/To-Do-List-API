@@ -9,6 +9,7 @@ import (
 	"github.com/ArtoIi/To-Do-List-API/internal/domain"
 	p_error "github.com/ArtoIi/To-Do-List-API/internal/infrastructure/error"
 	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/security"
+	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/utils"
 )
 
 type UserService struct {
@@ -20,6 +21,10 @@ func NewUserService(repository domain.UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
+
+	if err := utils.ValidateStruct(dto); err != nil {
+		return "", err
+	}
 
 	hashed, _ := security.HashedPassword(dto.Password)
 	user := &domain.User{

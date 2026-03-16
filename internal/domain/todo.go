@@ -13,7 +13,7 @@ type ToDo struct {
 
 type ToDoRepository interface {
 	Post(user *ToDo) error
-	GetUserId(id int) ([]*ToDo, error)
+	GetUserId(userID int, limit, offset int) ([]*ToDo, int, error)
 	GetId(id int) (*ToDo, error)
 	Update(user *ToDo) (*ToDo, error)
 	Delete(id int) error

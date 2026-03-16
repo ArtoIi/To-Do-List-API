@@ -43,7 +43,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.service.CreateUser(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.handleError(w, r, err)
 		return
 	}
 

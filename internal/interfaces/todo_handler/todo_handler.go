@@ -12,11 +12,11 @@ import (
 )
 
 type ToDoService interface {
-	CreatePost(dto *todoDTO.ToDoDTO, user_id int) (string, error)
+	CreatePost(dto *todoDTO.DTO, user_id int) (string, error)
 	GetById(id int) (*domain.ToDo, error)
-	GetByUserId(user_id int) ([]*domain.ToDo, error)
+	GetByUserId(user_id int, filter todoDTO.Filter) ([]*domain.ToDo, int, error)
 	DeletePost(id int) error
-	UpdatePost(dto *todoDTO.ToDoDTO, id int) (*domain.ToDo, error)
+	UpdatePost(dto *todoDTO.DTO, id int) (*domain.ToDo, error)
 }
 
 type ToDoHandler struct {
@@ -33,7 +33,7 @@ func (h ToDoHandler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dto todoDTO.ToDoDTO
+	var dto todoDTO.DTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		h.handleError(w, r, p_error.ErrInvalidJSON)
 		return
@@ -78,16 +78,37 @@ func (h *ToDoHandler) GetUserId(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
 	}
-	idstr := r.PathValue("user_id")
-	id, _ := strconv.Atoi(idstr)
+	userIDstr := r.PathValue("user_id")
+	userID, _ := strconv.Atoi(userIDstr)
 
-	todo, err := h.service.GetByUserId(id)
+	query := r.URL.Query()
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page <= 0 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit <= 0 {
+		limit = 10
+	}
+
+	filter := todoDTO.Filter{
+		Page:  page,
+		Limit: limit,
+	}
+
+	todos, total, err := h.service.GetByUserId(userID, filter)
 	if err != nil {
 		h.handleError(w, r, err)
 		return
 	}
-	utils.Respond(w, http.StatusOK, todo)
 
+	meta := &utils.PaginationMeta{
+		Page:  filter.Page,
+		Limit: limit,
+		Total: total,
+	}
+
+	utils.Respond(w, http.StatusOK, todos, meta)
 }
 func (h *ToDoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
@@ -113,7 +134,7 @@ func (h *ToDoHandler) Update(w http.ResponseWriter, r *http.Request) {
 	idstr := r.PathValue("id")
 	id, _ := strconv.Atoi(idstr)
 
-	var dto *todoDTO.ToDoDTO
+	var dto *todoDTO.DTO
 	json.NewDecoder(r.Body).Decode(&dto)
 
 	newToDo, err := h.service.UpdatePost(dto, id)
