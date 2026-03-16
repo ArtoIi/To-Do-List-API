@@ -9,17 +9,22 @@ import (
 	"github.com/ArtoIi/To-Do-List-API/internal/domain"
 	p_error "github.com/ArtoIi/To-Do-List-API/internal/infrastructure/error"
 	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/security"
+	"github.com/ArtoIi/To-Do-List-API/internal/infrastructure/utils"
 )
 
-type ToDoService struct {
+type UserService struct {
 	repo domain.UserRepository
 }
 
-func NewToDoService(repository domain.UserRepository) *ToDoService {
-	return &ToDoService{repo: repository}
+func NewUserService(repository domain.UserRepository) *UserService {
+	return &UserService{repo: repository}
 }
 
-func (s *ToDoService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
+func (s *UserService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
+
+	if err := utils.ValidateStruct(dto); err != nil {
+		return "", err
+	}
 
 	hashed, _ := security.HashedPassword(dto.Password)
 	user := &domain.User{
@@ -31,8 +36,8 @@ func (s *ToDoService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	token, err := security.GenerateToken(user)
+	userCreated, _ := s.GetByEmail(user.Email)
+	token, err := security.GenerateToken(userCreated)
 
 	if err != nil {
 		return "", err
@@ -41,7 +46,7 @@ func (s *ToDoService) CreateUser(dto userDTO.CreateUserDTO) (string, error) {
 	return token, err
 }
 
-func (s *ToDoService) GetByEmail(email string) (*domain.User, error) {
+func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 	user, err := s.repo.GetEmail(email)
 
 	if err != nil {
@@ -49,7 +54,7 @@ func (s *ToDoService) GetByEmail(email string) (*domain.User, error) {
 	}
 	return user, nil
 }
-func (s *ToDoService) GetById(id int) (*domain.User, error) {
+func (s *UserService) GetById(id int) (*domain.User, error) {
 	user, err := s.repo.GetId(id)
 
 	if err != nil {
@@ -58,12 +63,12 @@ func (s *ToDoService) GetById(id int) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *ToDoService) DeleteUser(id int) error {
+func (s *UserService) DeleteUser(id int) error {
 	err := s.repo.Delete(id)
 	return err
 }
 
-func (s *ToDoService) UpdateUser(dto userDTO.UpdateUserDTO) (*domain.User, error) {
+func (s *UserService) UpdateUser(dto userDTO.UpdateUserDTO) (*domain.User, error) {
 	if dto.Id == "" {
 		return nil, errors.New("id is required")
 	}
@@ -104,7 +109,7 @@ func (s *ToDoService) UpdateUser(dto userDTO.UpdateUserDTO) (*domain.User, error
 	return user, nil
 }
 
-func (s *ToDoService) Login(email, password string) (string, error) {
+func (s *UserService) Login(email, password string) (string, error) {
 	user, err := s.GetByEmail(email)
 	if err != nil {
 		return "", nil

@@ -7,13 +7,13 @@ type CreateUserDTO struct {
 }
 
 type UpdateUserDTO struct {
-	Id       string  `json:"id"`
+	Id       string  `json:"id" validate:"required"`
 	Name     *string `json:"name"`
 	Email    *string `json:"email"`
 	Password *string `json:"password"`
 }
 
 type LoginUserDTO struct {
-	Email    string `json:"email,omitempty"`
-	Password string `json:"password,omitempty"`
+	Email    string `json:"email,omitempty" validate:"required"`
+	Password string `json:"password,omitempty" validate:"required"`
 }

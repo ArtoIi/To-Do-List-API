@@ -1,4 +1,4 @@
-package db
+package user_repo
 
 import (
 	"database/sql"
@@ -9,24 +9,15 @@ import (
 	"github.com/ArtoIi/To-Do-List-API/internal/domain"
 )
 
-type MySQLRepository struct {
+type UserRepository struct {
 	db *sql.DB
 }
 
-func NewMySQLRepository(dns string) (*MySQLRepository, error) {
-	db, err := sql.Open("mysql", dns)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return &MySQLRepository{db: db}, nil
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
-func (r *MySQLRepository) Register(user *domain.User) error {
+func (r *UserRepository) Register(user *domain.User) error {
 
 	query := `INSERT INTO user
 			(name, email, hashed_password)
@@ -38,7 +29,7 @@ func (r *MySQLRepository) Register(user *domain.User) error {
 
 }
 
-func (r *MySQLRepository) GetEmail(email string) (*domain.User, error) {
+func (r *UserRepository) GetEmail(email string) (*domain.User, error) {
 	query := `SELECT id,name, email, hashed_password 
 				FROM user
 				Where email=? `
@@ -52,7 +43,7 @@ func (r *MySQLRepository) GetEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
-func (r *MySQLRepository) GetId(id int) (*domain.User, error) {
+func (r *UserRepository) GetId(id int) (*domain.User, error) {
 	query := `SELECT id,name, email, hashed_password 
 				FROM user
 				Where id=? `
@@ -66,7 +57,7 @@ func (r *MySQLRepository) GetId(id int) (*domain.User, error) {
 	return user, nil
 }
 
-func (r *MySQLRepository) Update(user *domain.User) error {
+func (r *UserRepository) Update(user *domain.User) error {
 
 	query := `UPDATE user SET name=?, email=?, hashed_password=? WHERE id=?`
 
@@ -87,7 +78,7 @@ func (r *MySQLRepository) Update(user *domain.User) error {
 	return nil
 }
 
-func (r *MySQLRepository) Delete(id int) error {
+func (r *UserRepository) Delete(id int) error {
 	query := `DELETE FROM user Where id=? `
 
 	result, err := r.db.Exec(query, id)
