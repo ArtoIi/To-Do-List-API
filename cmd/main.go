@@ -54,8 +54,8 @@ func main() {
 	toDoService := todoservice.NewToDoService(toDoRepo)
 	toDoHandler := todoHandler.NewToDoHandler(toDoService)
 	mux.Handle("POST /todo", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Post)))
-	mux.HandleFunc("PUT /todo/{id}", toDoHandler.Update)
-	mux.HandleFunc("DELETE /todo/{id}", toDoHandler.Delete)
+	mux.Handle("PUT /todo/{id}", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Update)))
+	mux.Handle("DELETE /todo/{id}", interfaces.AuthMiddleware(http.HandlerFunc(toDoHandler.Delete)))
 	mux.HandleFunc("GET /todo/getId/{id}", toDoHandler.GetId)
 	mux.HandleFunc("GET /todo/getUserId/{user_id}", toDoHandler.GetUserId)
 

@@ -15,8 +15,8 @@ type ToDoService interface {
 	CreatePost(dto *todoDTO.DTO, user_id int) (string, error)
 	GetById(id int) (*domain.ToDo, error)
 	GetByUserId(user_id int, filter todoDTO.Filter) ([]*domain.ToDo, int, error)
-	DeletePost(id int) error
-	UpdatePost(dto *todoDTO.DTO, id int) (*domain.ToDo, error)
+	DeletePost(id, userId int) error
+	UpdatePost(dto *todoDTO.DTO, id int, userId int) (*domain.ToDo, error)
 }
 
 type ToDoHandler struct {
@@ -115,10 +115,13 @@ func (h *ToDoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
 	}
+
+	userid := r.Context().Value("user_id").(float64)
+
 	idstr := r.PathValue("id")
 	id, _ := strconv.Atoi(idstr)
 
-	if err := h.service.DeletePost(id); err != nil {
+	if err := h.service.DeletePost(id, int(userid)); err != nil {
 		h.handleError(w, r, err)
 		return
 	}
@@ -131,13 +134,16 @@ func (h *ToDoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, r, p_error.ErrInvalidMethod)
 		return
 	}
+
+	userid := r.Context().Value("user_id").(float64)
+
 	idstr := r.PathValue("id")
 	id, _ := strconv.Atoi(idstr)
 
 	var dto *todoDTO.DTO
 	json.NewDecoder(r.Body).Decode(&dto)
 
-	newToDo, err := h.service.UpdatePost(dto, id)
+	newToDo, err := h.service.UpdatePost(dto, id, int(userid))
 	if err != nil {
 		h.handleError(w, r, err)
 		return

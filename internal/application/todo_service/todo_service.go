@@ -1,6 +1,7 @@
 package todoservice
 
 import (
+	"errors"
 	"time"
 
 	todoDTO "github.com/ArtoIi/To-Do-List-API/internal/application/todo_dto"
@@ -51,15 +52,27 @@ func (s *ToDoService) GetByUserId(user_id int, filter todoDTO.Filter) ([]*domain
 	return s.repo.GetUserId(user_id, filter.Limit, offset)
 }
 
-func (s *ToDoService) DeletePost(id int) error {
+func (s *ToDoService) DeletePost(id, userId int) error {
+	todo, err := s.GetById(id)
+	if err != nil {
+		return err
+	}
+
+	if todo.UserID != userId {
+		return errors.New("permissão negada")
+	}
 	return s.repo.Delete(id)
 }
 
-func (s *ToDoService) UpdatePost(dto *todoDTO.DTO, id int) (*domain.ToDo, error) {
+func (s *ToDoService) UpdatePost(dto *todoDTO.DTO, id int, userId int) (*domain.ToDo, error) {
 	toDoNew, err := s.GetById(id)
 	if err != nil {
 		return nil, err
 	}
+	if toDoNew.UserID != userId {
+		return nil, errors.New("permissão negada")
+	}
+
 	if dto.Title != "" {
 		toDoNew.Title = dto.Title
 	}
